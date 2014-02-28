@@ -9,6 +9,8 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MonoDevelop.CSharpRepl</RootNamespace>
     <AssemblyName>CSharpRepl</AssemblyName>
+    <MonoDevelopBasePath>C:\Program Files %28x86%29\Xamarin Studio\</MonoDevelopBasePath>
+    <MonoDevelopExecutableName>Xamarin Studio.exe</MonoDevelopExecutableName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMac|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -19,21 +21,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <CustomCommands>
-      <CustomCommands>
-        <Command type="Execute" command="MonoDevelop.exe --no-redirect" workingdir="../../monodevelop/main/build/bin" externalConsole="True">
-          <EnvironmentVariables>
-            <Variable name="PATH" value="/Library/Frameworks/Mono.framework/Versions/Current/bin:$(PATH)" />
-            <Variable name="DYLD_FALLBACK_LIBRARY_PATH" value="/Library/Frameworks/Mono.framework/Versions/Current/lib:/lib:/usr/lib" />
-            <Variable name="MONODEVELOP_DEV_ADDINS" value="$(TargetDir)" />
-            <Variable name="MONODEVELOP_CONSOLE_LOG_LEVEL" value="All" />
-            <Variable name="MONO_GAC_PREFIX" value="" />
-            <Variable name="MONODEVELOP_LOCALE_PATH" value="../locale" />
-            <Variable name="MONO_ADDINS_REGISTRY" value="." />
-          </EnvironmentVariables>
-        </Command>
-      </CustomCommands>
-    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -48,54 +35,42 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="MonoDevelop.CSharpBinding">
-      <HintPath>..\..\monodevelop\main\build\AddIns\BackendBindings\MonoDevelop.CSharpBinding.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MonoDevelopBasePath)AddIns\BackendBindings\MonoDevelop.CSharpBinding.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Mono.CSharp">
       <Private>True</Private>
     </Reference>
     <Reference Include="MonoDevelop.Core">
-      <HintPath>..\..\monodevelop\main\build\bin\MonoDevelop.Core.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MonoDevelopBasePath)bin\MonoDevelop.Core.dll</HintPath>
     </Reference>
     <Reference Include="MonoDevelop.Ide">
-      <HintPath>..\..\monodevelop\main\build\bin\MonoDevelop.Ide.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MonoDevelopBasePath)bin\MonoDevelop.Ide.dll</HintPath>
     </Reference>
-    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Private>False</Private>
-    </Reference>
+    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="MonoDevelop.SourceEditor2">
-      <HintPath>..\..\monodevelop\main\build\AddIns\DisplayBindings\SourceEditor\MonoDevelop.SourceEditor2.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MonoDevelopBasePath)AddIns\DisplayBindings\SourceEditor\MonoDevelop.SourceEditor2.dll</HintPath>
     </Reference>
     <Reference Include="Mono.TextEditor">
-      <HintPath>..\..\monodevelop\main\build\bin\Mono.TextEditor.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(MonoDevelopBasePath)bin\Mono.TextEditor.dll</HintPath>
     </Reference>
     <Reference Include="ICSharpCode.NRefactory">
-      <HintPath>..\..\monodevelop\main\build\bin\ICSharpCode.NRefactory.dll</HintPath>
+      <HintPath>$(MonoDevelopBasePath)bin\ICSharpCode.NRefactory.dll</HintPath>
     </Reference>
     <Reference Include="ICSharpCode.NRefactory.CSharp">
-      <HintPath>..\..\monodevelop\main\build\bin\ICSharpCode.NRefactory.CSharp.dll</HintPath>
+      <HintPath>$(MonoDevelopBasePath)bin\ICSharpCode.NRefactory.CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System.Core" />
   </ItemGroup>
