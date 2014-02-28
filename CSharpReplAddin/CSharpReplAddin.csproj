@@ -93,7 +93,7 @@
 	</ItemGroup>
 
 	<Target Name="BeforeResolveReferences">
-		<ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
+		<ItemGroup>
 			<BRSearchPathDlls Include="$(MonoDevelopBasePath)**\*.dll"/>
 		</ItemGroup>
 		<RemoveDuplicates Inputs="@(BRSearchPathDlls->'%(RootDir)%(Directory)')">    
