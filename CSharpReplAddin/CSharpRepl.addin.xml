@@ -1,12 +1,12 @@
 <Addin id          = "CSharpRepl"
        namespace   = "MonoDevelop"
        name        = "C# REPL Pad"
-       author      = "Scott Stephens"
+       author      = "Scott Stephens, Dustin Mays"
        copyright   = "MIT X11"
-       url         = "xxx"
+       url         = "https://github.com/nerdshark/CSharpReplAddin"
        description = "Provides REPL pad for C# language"
-	   category    = "??"
-       version     = "0.0.0">
+	   category    = "IDE Extensions"
+       version     = "0.1">
 
 	<Runtime>
 		<Import assembly = "CSharpRepl.dll"/>
