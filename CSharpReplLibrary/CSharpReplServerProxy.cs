@@ -1,78 +1,71 @@
 using System;
 using System.Net;
-using System.Net.Sockets;
+using NetMQ;
 
 namespace MonoDevelop.CSharpRepl
 {
 	public class CSharpReplServerProxy : ICSharpRepl
 	{
-		public TcpClient Client { get; private set; }
-		public IPEndPoint RemoteAddress { get; private set; }
+		private readonly NetMQContext NmqContext;
+		private readonly NetMQSocket Client;
+		private readonly int Port;
 
-		public CSharpReplServerProxy(int port)
+		public CSharpReplServerProxy(int port, NetMQContext ctx = null)
 		{
-			this.Client = new TcpClient();
-			this.RemoteAddress = new IPEndPoint(IPAddress.Loopback, port);
+			NmqContext = ctx == null ? NetMQContext.Create () : ctx;
+			Client = NmqContext.CreateRequestSocket ();
+			Port = port;
 		}
+
 		public void Start()
 		{
-			this.Client.Connect(this.RemoteAddress);
+			Client.Connect (String.Format("tcp://localhost:{0}", Port));
+			       //this.Client.Connect(this.RemoteAddress);
 		}
 		#region ICSharpShell implementation
 
+		internal Result ReceiveMessage()
+		{
+			byte[] incoming_buffer = Client.Receive ();
+			var result = Result.Deserialize(incoming_buffer);
+			return result;
+		}
+
+		internal void SendMessage(Request rq)
+		{
+			byte[] outgoing_buffer = rq.Serialize();
+			Client.Send (outgoing_buffer);
+		}
+
 		public Result evaluate (string input)
 		{
-			StreamedMessageUtils<NetworkStream> messenger = new StreamedMessageUtils<NetworkStream>(this.Client.GetStream());
-
 			var request = Request.CreateEvaluationRequest(input);
-			byte[] outgoing_buffer = request.Serialize();
-			messenger.writeMessage(outgoing_buffer);
-
-			byte[] incoming_buffer = messenger.readMessage();
-			var result = Result.Deserialize(incoming_buffer);
-
+			SendMessage (request);
+			var result = ReceiveMessage ();
 			return result;
 		}
 
 		public Result loadAssembly(string file)
 		{
-			StreamedMessageUtils<NetworkStream> messenger = new StreamedMessageUtils<NetworkStream>(this.Client.GetStream());
-			
 			var request = Request.CreateLoadAssemblyRequest(file);
-			byte[] outgoing_buffer = request.Serialize();
-			messenger.writeMessage(outgoing_buffer);
-			
-			byte[] incoming_buffer = messenger.readMessage();
-			var result = Result.Deserialize(incoming_buffer);
-			
+			SendMessage (request);
+			var result = ReceiveMessage ();
 			return result;
 		}
 
 		public Result getVariables()
 		{
-			StreamedMessageUtils<NetworkStream> messenger = new StreamedMessageUtils<NetworkStream>(this.Client.GetStream());
-			
-			var request = Request.CreateGetVariablesRequest();
-			byte[] outgoing_buffer = request.Serialize();
-			messenger.writeMessage(outgoing_buffer);
-			
-			byte[] incoming_buffer = messenger.readMessage();
-			var result = Result.Deserialize(incoming_buffer);
-			
+			var request = Request.CreateGetVariablesRequest ();
+			SendMessage (request);
+			var result = ReceiveMessage ();
 			return result;
 		}
 
 		public Result getUsings()
 		{
-			StreamedMessageUtils<NetworkStream> messenger = new StreamedMessageUtils<NetworkStream>(this.Client.GetStream());
-			
-			var request = Request.CreateGetUsingsRequest();
-			byte[] outgoing_buffer = request.Serialize();
-			messenger.writeMessage(outgoing_buffer);
-			
-			byte[] incoming_buffer = messenger.readMessage();
-			var result = Result.Deserialize(incoming_buffer);
-			
+			var request = Request.CreateGetUsingsRequest ();
+			SendMessage (request);
+			var result = ReceiveMessage ();
 			return result;
 		}
 

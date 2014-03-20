@@ -1,104 +1,96 @@
 using System;
 using System.Net;
-using System.Net.Sockets;
+using System.Net.NetworkInformation;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Text;
-
+using System.Linq;
+using NetMQ;
 using Mono.CSharp;
 
 namespace MonoDevelop.CSharpRepl
 {
-	public class CSharpReplServer
+	public class CSharpReplServer 
 	{
+		private readonly int PortStartRange = 1000;
+
+		private CancellationTokenSource cancellationTokenSource;
+		private readonly NetMQContext NmqContext;
 		private int Port { get; set; }
-		private TcpListener Listener { get; set; }
-		private Thread ListenThread { get; set; }
 		private CSharpRepl Repl { get; set; }
 
-		public CSharpReplServer (int port)
+		private int AutoPort { get; set; } // 
+
+		public CSharpReplServer (int p, NetMQContext ctx = null)
 		{
-			this.Port = port;
+			this.Port = p;
+			AutoPort = GetOpenPort();
+
+			if(ctx == null)
+			{
+				NmqContext = NetMQContext.Create ();
+			}
+			else
+			{
+				NmqContext = ctx;
+			}
+		}
+
+		internal int GetOpenPort() {
+			var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties ();
+			var tcpEndpoints = ipGlobalProperties.GetActiveTcpListeners ();
+			var query = tcpEndpoints.OrderBy (endpoint => endpoint.Port)
+				.Where (endpoint => endpoint.Port >= PortStartRange)
+				.Select (endpoint => endpoint.Port).Distinct ().ToList ();
+
+			int freePort = PortStartRange;
+			foreach (var port in query)
+			{
+				if(port != PortStartRange) break;
+				freePort++;
+			}
+			return freePort;
 		}
 
 		public void Start()
 		{
-			this.Listener = new TcpListener(IPAddress.Loopback, this.Port);
-			this.ListenThread = new Thread(new ThreadStart(listenForClients));
-			this.Repl = new CSharpRepl();
-			this.ListenThread.Start();
-		}
-
-		private void listenForClients()
-		{
-			try {
-				this.Listener.Start();
-			} catch (Exception e) {
-				Console.WriteLine("Error starting TCP listener: " + e.Message);
-				return;
-			}
-			
-			while (true)
+			cancellationTokenSource = new CancellationTokenSource ();
+			var ct = cancellationTokenSource.Token;
+			Task.Factory.StartNew (() =>
 			{
-				//blocks until a client has connected to the server
-				TcpClient client;
-				try {
-					client = this.Listener.AcceptTcpClient();
-				} catch (Exception e) {
-					Console.WriteLine("Error accepting client connection: " + e.Message);
-					break;
-				}
-				
-				//handle communications with connected client
-				try {
-					handleClientComm(client);
-				} catch (Exception e) {
-					Console.WriteLine("Error in handling client communications: " + e.Message);
-					break;
-				}
-			}
-		}
-
-		private void handleClientComm(object client)
-		{
-			TcpClient tcpClient = (TcpClient)client;
-
-			var messenger = new StreamedMessageUtils<NetworkStream>(tcpClient.GetStream());
-			
-			while (true)
-			{
-				
-				try
+				ct.ThrowIfCancellationRequested ();
+				Repl = new CSharpRepl();
+				using (var server = NmqContext.CreateResponseSocket ())
 				{
-					//blocks until a client sends a message
-					byte[] buffer = messenger.readMessage();
-					var request = Request.Deserialize(buffer);
-					Result result;
-					if (request.Type == RequestType.Evaluate) {
-						result = this.Repl.evaluate(request.Code);
-					} else if (request.Type == RequestType.LoadAssembly) {
-						result = this.Repl.loadAssembly(request.AssemblyToLoad);
-					} else if (request.Type == RequestType.Variables) {
-						result = this.Repl.getVariables();
-					} else if (request.Type == RequestType.Usings) {
-						result = this.Repl.getUsings();
-					} else {
-						Console.WriteLine("Received unexpected request type {0}",request.Type);
-						break;
+					server.Bind (String.Format("tcp://*:{0}", Port));
+					while (true)
+					{
+						if (ct.IsCancellationRequested)
+						{
+							// clean up here
+							ct.ThrowIfCancellationRequested ();
+						}
+						var msg = server.Receive ();
+						var request = Request.Deserialize (msg);
+						Result result;
+						if (request.Type == RequestType.Evaluate) {
+							result = this.Repl.evaluate(request.Code);
+						} else if (request.Type == RequestType.LoadAssembly) {
+							result = this.Repl.loadAssembly(request.AssemblyToLoad);
+						} else if (request.Type == RequestType.Variables) {
+							result = this.Repl.getVariables();
+						} else if (request.Type == RequestType.Usings) {
+							result = this.Repl.getUsings();
+						} else {
+							Console.WriteLine("Received unexpected request type {0}",request.Type);
+							break;
+						}
+
+						byte[] output_buffer = result.Serialize();
+						server.Send (output_buffer);
 					}
-
-					byte[] output_buffer = result.Serialize();
-					messenger.writeMessage(output_buffer);
 				}
-				catch (Exception e)
-				{
-					Console.WriteLine("Unexpected error occurred: " + e.Message);
-					break;
-				}
-				Console.Out.Flush();
-				Console.Error.Flush();
-			}
-
-			tcpClient.Close();
+			}, ct).Wait ();
 		}
 
 		public static void Run(string[] args)

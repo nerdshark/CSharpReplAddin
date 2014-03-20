@@ -2,143 +2,142 @@ using System;
 using System.IO;
 using System.Collections;
 using Mono.CSharp;
+using System.Collections.Generic;
 
 namespace MonoDevelop.CSharpRepl
 {
-
-	public interface ICSharpRepl 
+	public interface ICSharpRepl
 	{
-		Result evaluate(string input);
-		Result loadAssembly(string file);
-		Result getVariables();
-		Result getUsings();
+		Result evaluate (string input);
+
+		Result loadAssembly (string file);
+
+		Result getVariables ();
+
+		Result getUsings ();
 	}
 
 	public class CSharpRepl : ICSharpRepl
 	{
 		private Evaluator InnerEvaluator { get; set; }
+
 		private CompilerSettings Settings { get; set; }
+
 		private CompilerContext Context { get; set; }
+
 		private StreamReportPrinter Printer { get; set; }
+
 		private StringWriter CompilerErrorWriter { get; set; }
 
 		public CSharpRepl ()
 		{
-			this.Settings = new CompilerSettings();
-			this.CompilerErrorWriter = new StringWriter();
-			this.Printer = new StreamReportPrinter(this.CompilerErrorWriter);
+			this.Settings = new CompilerSettings ();
+			this.CompilerErrorWriter = new StringWriter ();
+			this.Printer = new StreamReportPrinter (this.CompilerErrorWriter);
 			this.Context = new CompilerContext (this.Settings, this.Printer);
-			this.InnerEvaluator = new Evaluator(this.Context);
+			this.InnerEvaluator = new Evaluator (this.Context);
 			this.InnerEvaluator.InteractiveBaseClass = typeof(InteractiveBase);
 			this.InnerEvaluator.DescribeTypeExpressions = true;
-			this.InitializeUsings();
+			this.InitializeUsings ();
 		}
 
-		private void InitializeUsings()
+		private void InitializeUsings ()
 		{
-			this.evaluate("using System; using System.Linq; using System.Collections.Generic; using System.Collections;");
+			this.evaluate ("using System; using System.Linq; using System.Collections.Generic; using System.Collections;");
 		}
 
-		public Result evaluate(string input)
+		public Result evaluate (string input)
 		{
 			Result output;
-			try 
-			{
+			try {
 				object result;
 				bool result_set;
 				input = this.InnerEvaluator.Evaluate (input, out result, out result_set);
 
-				if (this.Printer.ErrorsCount > 0)
-				{
-					output = new Result(ResultType.FAILED, this.CompilerErrorWriter.GetStringBuilder().ToString());
-					this.CompilerErrorWriter.GetStringBuilder().Clear();
-				}
-				else if (result_set)
-				{
-					StringWriter output_writer = new StringWriter();
+				if (this.Printer.ErrorsCount > 0) {
+					output = new Result (ResultType.FAILED, this.CompilerErrorWriter.GetStringBuilder ().ToString ());
+					this.CompilerErrorWriter.GetStringBuilder ().Clear ();
+				} else if (result_set) {
+					StringWriter output_writer = new StringWriter ();
 					PrettyPrint (output_writer, result);
-					output_writer.Close();
-					output = new Result(ResultType.SUCCESS_WITH_OUTPUT, output_writer.GetStringBuilder().ToString());
-				} 
-				else if (input == null)
-				{
-					output = new Result(ResultType.SUCCESS_NO_OUTPUT, null);
-				}
-				else 
-				{
-					output = new Result(ResultType.NEED_MORE_INPUT, null);
+					output_writer.Close ();
+					output = new Result (ResultType.SUCCESS_WITH_OUTPUT, output_writer.GetStringBuilder ().ToString ());
+				} else if (input == null) {
+					output = new Result (ResultType.SUCCESS_NO_OUTPUT, null);
+				} else {
+					output = new Result (ResultType.NEED_MORE_INPUT, null);
 				}
 
-			} 
-			catch (Exception e)
-			{
-				output = new Result(ResultType.FAILED, e.ToString());
+			} catch (Exception e) {
+				output = new Result (ResultType.FAILED, e.ToString ());
 			}
-			this.Printer.Reset();
+			this.Printer.Reset ();
 			return output;
 		}
 
-		public Result loadAssembly(string name_or_path)
+		public Result loadAssembly (string name_or_path)
 		{
 			try {
-				this.InnerEvaluator.LoadAssembly(name_or_path);
-				return new Result(ResultType.SUCCESS_NO_OUTPUT, null);
-			} catch(Exception e) {
-				return new Result(ResultType.FAILED,e.Message);
-			}
-		}
-		public Result loadPackage(string package)
-		{
-			try {
-				InteractiveBase.LoadPackage(package);
-				return new Result(ResultType.SUCCESS_NO_OUTPUT, null);
+				this.InnerEvaluator.LoadAssembly (name_or_path);
+				return new Result (ResultType.SUCCESS_NO_OUTPUT, null);
 			} catch (Exception e) {
-				return new Result(ResultType.FAILED, e.Message);
+				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
-		public Result getVariables()
+		public Result loadPackage (string package)
 		{
 			try {
-				string vars = this.InnerEvaluator.GetVars();
-				return new Result(ResultType.SUCCESS_WITH_OUTPUT, vars);
+				InteractiveBase.LoadPackage (package);
+				return new Result (ResultType.SUCCESS_NO_OUTPUT, null);
 			} catch (Exception e) {
-				return new Result(ResultType.FAILED, e.Message);
+				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
-		public Result getUsings()
+		public Result getVariables ()
 		{
 			try {
-				string usings = this.InnerEvaluator.GetUsing();
-				return new Result(ResultType.SUCCESS_WITH_OUTPUT, usings);
+				string vars = this.InnerEvaluator.GetVars ();
+				return new Result (ResultType.SUCCESS_WITH_OUTPUT, vars);
 			} catch (Exception e) {
-				return new Result(ResultType.FAILED, e.Message);
+				return new Result (ResultType.FAILED, e.Message);
+			}
+		}
+
+		public Result getUsings ()
+		{
+			try {
+				string usings = this.InnerEvaluator.GetUsing ();
+				return new Result (ResultType.SUCCESS_WITH_OUTPUT, usings);
+			} catch (Exception e) {
+				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
 		#region pretty printing
+
 		static void p (TextWriter output, string s)
 		{
 			output.Write (s);
 		}
-		
+
 		static string EscapeString (string s)
 		{
 			return s.Replace ("\"", "\\\"");
 		}
-		
+
 		static void EscapeChar (TextWriter output, char c)
 		{
-			if (c == '\''){
+			if (c == '\'') {
 				output.Write ("'\\''");
 				return;
 			}
-			if (c > 32){
+			if (c > 32) {
 				output.Write ("'{0}'", c);
 				return;
 			}
-			switch (c){
+			switch (c) {
 			case '\a':
 				output.Write ("'\\a'");
 				break;
@@ -168,11 +167,10 @@ namespace MonoDevelop.CSharpRepl
 				break;
 				
 			default:
-				output.Write ("'\\x{0:x}", (int) c);
+				output.Write ("'\\x{0:x}", (int)c);
 				break;
 			}
 		}
-		
 		// Some types (System.Json.JsonPrimitive) implement
 		// IEnumerator and yet, throw an exception when we
 		// try to use them, helper function to check for that
@@ -180,7 +178,7 @@ namespace MonoDevelop.CSharpRepl
 		static internal bool WorksAsEnumerable (object obj)
 		{
 			IEnumerable enumerable = obj as IEnumerable;
-			if (enumerable != null){
+			if (enumerable != null) {
 				try {
 					enumerable.GetEnumerator ();
 					return true;
@@ -193,35 +191,35 @@ namespace MonoDevelop.CSharpRepl
 
 		internal static void PrettyPrint (TextWriter output, object result)
 		{
-			if (result == null){
+			if (result == null) {
 				p (output, "null");
 				return;
 			}
 			
-			if (result is Array){
-				Array a = (Array) result;
+			if (result is Array) {
+				Array a = (Array)result;
 				
 				p (output, "{ ");
 				int top = a.GetUpperBound (0);
-				for (int i = a.GetLowerBound (0); i <= top; i++){
+				for (int i = a.GetLowerBound (0); i <= top; i++) {
 					PrettyPrint (output, a.GetValue (i));
 					if (i != top)
 						p (output, ", ");
 				}
 				p (output, " }");
-			} else if (result is bool){
-				if ((bool) result)
+			} else if (result is bool) {
+				if ((bool)result)
 					p (output, "true");
 				else
 					p (output, "false");
-			} else if (result is string){
+			} else if (result is string) {
 				p (output, String.Format ("\"{0}\"", EscapeString ((string)result)));
-			} else if (result is IDictionary){
-				IDictionary dict = (IDictionary) result;
+			} else if (result is IDictionary) {
+				IDictionary dict = (IDictionary)result;
 				int top = dict.Count, count = 0;
 				
 				p (output, "{");
-				foreach (DictionaryEntry entry in dict){
+				foreach (DictionaryEntry entry in dict) {
 					count++;
 					p (output, "{ ");
 					PrettyPrint (output, entry.Key);
@@ -244,15 +242,13 @@ namespace MonoDevelop.CSharpRepl
 				}
 				p (output, " }");
 			} else if (result is char) {
-				EscapeChar (output, (char) result);
+				EscapeChar (output, (char)result);
 			} else {
 				p (output, result.ToString ());
 			}
 		}
-		#endregion 
+
+		#endregion
 	}
-
-	
-
 }
 
