@@ -1,9 +1,11 @@
-Interactive C# REPL addin for Monodevelop/Xamarin Studio
+Interactive C# REPL addin for MonoDevelop/Xamarin Studio
 
 # Hacking
 Before you start, open the CSharpReplAddin project file and find the MonoDevelopBasePath property. Set this to the directory where the version of MonoDevelop or Xamarin Studio that you want to build against lives.
 
 Also set the MonoDevelopExecutableName property to the filename (with extension) of your MonoDevelop/Xamarin Studio executable.
+
+This project uses NuGet, so you'll probably want to install the NuGet addin.
 
 <!--
 
