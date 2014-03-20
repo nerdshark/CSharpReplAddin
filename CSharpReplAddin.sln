@@ -11,6 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpReplServer64", "CShar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpReplServer32", "CSharpReplServer32\CSharpReplServer32.csproj", "{E9FB71B6-143E-4410-9E7D-157125F0FFF1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D34EEED2-C8DB-47FD-93CD-8B206955612D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebugMac|Any CPU = DebugMac|Any CPU
@@ -108,6 +113,8 @@ Global
 		{E9FB71B6-143E-4410-9E7D-157125F0FFF1}.Release|x64.Build.0 = Release|x86
 		{E9FB71B6-143E-4410-9E7D-157125F0FFF1}.Release|x86.ActiveCfg = Release|x86
 		{E9FB71B6-143E-4410-9E7D-157125F0FFF1}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = CSharpReplAddin\CSharpReplAddin.csproj
