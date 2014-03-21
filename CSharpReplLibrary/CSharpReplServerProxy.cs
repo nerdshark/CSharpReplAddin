@@ -12,7 +12,7 @@ namespace MonoDevelop.CSharpRepl
 
 		public CSharpReplServerProxy(int port, NetMQContext ctx = null)
 		{
-			NmqContext = ctx == null ? NetMQContext.Create () : ctx;
+			NmqContext = ctx ?? NetMQContext.Create ();
 			Client = NmqContext.CreateRequestSocket ();
 			Port = port;
 		}
@@ -22,7 +22,6 @@ namespace MonoDevelop.CSharpRepl
 			Client.Connect (String.Format("tcp://localhost:{0}", Port));
 			       //this.Client.Connect(this.RemoteAddress);
 		}
-		#region ICSharpShell implementation
 
 		internal Result ReceiveMessage()
 		{
@@ -36,6 +35,10 @@ namespace MonoDevelop.CSharpRepl
 			byte[] outgoing_buffer = rq.Serialize();
 			Client.Send (outgoing_buffer);
 		}
+
+		#region ICSharpShell implementation
+
+
 
 		public Result evaluate (string input)
 		{
