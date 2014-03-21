@@ -5,5 +5,5 @@
 *.userprefs
 *.csproj.user
 *.suo
-
+packages/*
 *.*~
