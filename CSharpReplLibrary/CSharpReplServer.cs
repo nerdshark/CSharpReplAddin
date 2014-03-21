@@ -10,15 +10,15 @@ using Mono.CSharp;
 
 namespace MonoDevelop.CSharpRepl
 {
-	public class CSharpReplServer 
+	public class CSharpReplServer
 	{
 		private readonly int PortStartRange = 1000;
 
 		private CancellationTokenSource cancellationTokenSource;
 		private readonly NetMQContext NmqContext;
+		private readonly NetMQScheduler NmqScheduler;
 		private int Port { get; set; }
 		private CSharpRepl Repl { get; set; }
-
 		private int AutoPort { get; set; } // 
 
 		public CSharpReplServer (int p, NetMQContext ctx = null)
@@ -26,14 +26,9 @@ namespace MonoDevelop.CSharpRepl
 			this.Port = p;
 			AutoPort = GetOpenPort();
 
-			if(ctx == null)
-			{
-				NmqContext = NetMQContext.Create ();
-			}
-			else
-			{
-				NmqContext = ctx;
-			}
+			NmqContext = ctx ?? NetMQContext.Create ();
+			NmqScheduler = new NetMQScheduler (NmqContext);
+			cancellationTokenSource = new CancellationTokenSource ();
 		}
 
 		internal int GetOpenPort() {
@@ -52,11 +47,10 @@ namespace MonoDevelop.CSharpRepl
 			return freePort;
 		}
 
-		public void Start()
+		public async Task Start()
 		{
-			cancellationTokenSource = new CancellationTokenSource ();
 			var ct = cancellationTokenSource.Token;
-			Task.Factory.StartNew (() =>
+			await Task.Factory.StartNew (() =>
 			{
 				ct.ThrowIfCancellationRequested ();
 				Repl = new CSharpRepl();
@@ -72,31 +66,60 @@ namespace MonoDevelop.CSharpRepl
 						}
 						var msg = server.Receive ();
 						var request = Request.Deserialize (msg);
-						Result result;
-						if (request.Type == RequestType.Evaluate) {
-							result = this.Repl.evaluate(request.Code);
-						} else if (request.Type == RequestType.LoadAssembly) {
-							result = this.Repl.loadAssembly(request.AssemblyToLoad);
-						} else if (request.Type == RequestType.Variables) {
-							result = this.Repl.getVariables();
-						} else if (request.Type == RequestType.Usings) {
-							result = this.Repl.getUsings();
-						} else {
-							Console.WriteLine("Received unexpected request type {0}",request.Type);
-							break;
-						}
+						var result = Handle(request);
 
 						byte[] output_buffer = result.Serialize();
 						server.Send (output_buffer);
 					}
 				}
-			}, ct).Wait ();
+			}, ct);
 		}
 
-		public static void Run(string[] args)
+		private Result Handle(Request request)
+		{
+			Result result;
+			try
+			{
+				switch (request.Type)
+				{
+					case RequestType.Evaluate:
+						result = Repl.evaluate(request.Code);
+						break;
+					case RequestType.LoadAssembly:
+						result = Repl.loadAssembly(request.AssemblyToLoad);
+						break;
+					case RequestType.Usings:
+						result = Repl.getUsings ();
+						break;
+					case RequestType.Variables:
+						result = Repl.getVariables ();
+						break;
+					default:
+						result = CreateInvalidRequestInfo (request);
+						break;
+				}
+				return result;
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine (e);
+				return new Result (ResultType.FAILED, "Error: Caught exception:\n" + e.Message);
+			}
+		}
+		private Result CreateInvalidRequestInfo(Request request)
+		{
+			var sb = new StringBuilder ();
+			sb
+				.AppendLine ("Invalid REPL request: ")
+				.AppendLine ("\tRequest type: ").Append (request.Type);
+				
+			return new Result (ResultType.FAILED, sb.ToString ());
+		}
+
+		public static async Task Run(string[] args)
 		{
 			var server = new CSharpReplServer(Int32.Parse(args[0]));
-			server.Start();
+			await server.Start();
 		}
 	}
 }

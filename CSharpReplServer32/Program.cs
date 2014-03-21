@@ -9,7 +9,8 @@ namespace CSharpReplServer64
     {
         public static void Main(string[] args)
         {
-            MonoDevelop.CSharpRepl.CSharpReplServer.Run(args);
+			Console.WriteLine ("Starting C# interactive shell on port {0}", args[0]);
+			MonoDevelop.CSharpRepl.CSharpReplServer.Run(args).Wait();
         }
     }
 }
