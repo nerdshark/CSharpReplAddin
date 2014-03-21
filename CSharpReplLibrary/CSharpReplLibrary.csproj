@@ -3,12 +3,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{192043DA-F32A-4DEA-A010-CD2C3971A34B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>MonoDevelop.CSharpRepl</RootNamespace>
     <AssemblyName>CSharpReplLibrary</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -43,7 +44,6 @@
     <Compile Include="CSharpRepl.cs" />
     <Compile Include="CSharpReplServer.cs" />
     <Compile Include="CSharpReplServerProxy.cs" />
-    <Compile Include="StreamWrapper.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="Result.cs" />
   </ItemGroup>

@@ -34,6 +34,13 @@ using MonoDevelop.Ide;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.CSharpRepl.Components;
 using MonoDevelop.Projects;
+using Gtk;
+using Process = System.Diagnostics.Process;
+using MonoDevelop.Components.Docking;
+using MonoDevelop.Components.DockToolbars;
+using MDComponents = MonoDevelop.Components;
+using MonoDevelop.Ide.Fonts;
+using MonoDevelop.Components.Theming;
 
 namespace MonoDevelop.CSharpRepl
 {
@@ -44,7 +51,7 @@ namespace MonoDevelop.CSharpRepl
 		public bool Running { get; private set; }
 
 		Pango.FontDescription customFont;
-		ReplView view;
+
 		bool disposed;
 		ICSharpRepl shell;
 
@@ -52,25 +59,89 @@ namespace MonoDevelop.CSharpRepl
 		StreamOutputter _stdout;
 		StreamOutputter _stderr;
 
+		ReplView currentReplView;
+		Image emptyImage;
+		Notebook notebook;
+		Widget content;
+		HBox layout;
+		Toolbar toolbar;
+		ToolButton newReplButton;
+
 		public void Initialize (IPadWindow container)
 		{
+			emptyImage = new Image ();
 			if (IdeApp.Preferences.CustomOutputPadFont != null)
 				customFont = IdeApp.Preferences.CustomOutputPadFont;
 			else 
-				customFont = Pango.FontDescription.FromString("Courier New");
-			
-			view = new ReplView ();
-			view.PromptMultiLineString = "+ ";
-			view.ConsoleInput += OnViewConsoleInput;
-			view.SetFont (customFont);
-			view.ShadowType = Gtk.ShadowType.None;
+				customFont = FontService.DefaultMonospaceFontDescription;
+				
 			//view.AddMenuCommand("Start Interactive Session", StartInteractiveSessionHandler);
 			//view.AddMenuCommand("Connect to Interactive Session", ConnectToInteractiveSessionHandler);
-			view.ShowAll ();
-			
+
+			notebook = new Notebook ();
+			notebook.Scrollable = true;
+
+			newReplButton = CreateNewReplButton ();
+			newReplButton.Clicked += (object sender, EventArgs e) =>
+			{
+				currentReplView = AddRepl ();
+			};
+
+			notebook.SwitchPage += (object o, SwitchPageArgs args) =>
+			{
+				currentReplView = (notebook.GetNthPage ((int)(args.PageNum))) as ReplView;
+			};
+
+			toolbar = CreateToolbar ();
+			toolbar.Add (newReplButton);
+
+			layout = new HBox ();
+			layout.PackStart (notebook, true, true, 0);
+			layout.PackEnd (toolbar, false, true, 0);
+			Control = layout;
+			Control.ShowAll ();
 			IdeApp.Preferences.CustomOutputPadFontChanged += HandleCustomOutputPadFontChanged;
 
 			ReplPad.Instance = this;
+		}
+
+		private Toolbar CreateToolbar()
+		{
+			var tb = new Toolbar ();
+			tb.IconSize = IconSize.SmallToolbar;
+			tb.Orientation = Orientation.Vertical;
+			tb.ToolbarStyle = ToolbarStyle.Icons;
+			return tb;
+		}
+
+		private ToolButton CreateNewReplButton()
+		{
+			var button = new ToolButton (Gtk.Stock.Add);
+			return button;
+		}
+
+		private ReplView CurrentRepl()
+		{
+			if(notebook.CurrentPageWidget != null)
+			{
+				return notebook.CurrentPageWidget as ReplView;
+			}
+			return null;
+		}
+
+		private ReplView AddRepl(string title = "REPL")
+		{
+			currentReplView = new ReplView ();
+			currentReplView.PromptString = "csharp> ";
+			currentReplView.PromptMultiLineString = "+ ";
+			currentReplView.ConsoleInput += OnViewConsoleInput;
+			currentReplView.SetFont (customFont);
+			currentReplView.ShadowType = Gtk.ShadowType.None;
+			var tabLabel = new MDComponents.TabLabel (new Label (title), emptyImage);
+			notebook.AppendPage (currentReplView, tabLabel);
+			if(notebook.NPages < 2) notebook.ShowTabs = false;
+			else notebook.ShowTabs = true;
+			return currentReplView;
 		}
 
 		public void Start(string platform="AnyCPU")
@@ -107,7 +178,7 @@ namespace MonoDevelop.CSharpRepl
 				_repl_process = null;
 			}
 			this.Running = false;
-			view.WriteOutput("Disconnected.");
+			currentReplView.WriteOutput("Disconnected.");
 		}
 
 		void StartInteractiveSessionHandler(object sender, EventArgs e)
@@ -133,7 +204,7 @@ namespace MonoDevelop.CSharpRepl
                     exe_name = "CSharpReplServer64.exe";
                     break;
                 default:
-                    view.WriteOutput(String.Format("Cannot start interactive session for platform {0}. Platform not supported.", platform));
+                    currentReplView.WriteOutput(String.Format("Cannot start interactive session for platform {0}. Platform not supported.", platform));
                     return;
             }
 
@@ -148,8 +219,8 @@ namespace MonoDevelop.CSharpRepl
 			start_info.RedirectStandardOutput = true;
 			
 			_repl_process = Process.Start(start_info);
-			_stdout = new StreamOutputter(_repl_process.StandardOutput, view);
-			_stderr = new StreamOutputter(_repl_process.StandardError, view);
+			_stdout = new StreamOutputter(_repl_process.StandardOutput, currentReplView);
+			_stderr = new StreamOutputter(_repl_process.StandardError, currentReplView);
 			_stdout.Start();
 			_stderr.Start();
 			Thread.Sleep(1000); // Give _repl_process time to start up before we let anybody do anything with it
@@ -161,11 +232,11 @@ namespace MonoDevelop.CSharpRepl
 				tmpshell.Start();
 				this.shell = tmpshell;
 				this.Running = true;
-                view.WriteOutput("Successfully connected to interactive session.");
+                currentReplView.WriteOutput("Successfully connected to interactive session.");
 			} catch (Exception e) {
 				this.shell = null;
 				this.Running = false;
-				view.WriteOutput("Failed connecting to interactive session: " + e.Message);
+				currentReplView.WriteOutput("Failed connecting to interactive session: " + e.Message);
 			}
 		}
 		
@@ -178,12 +249,12 @@ namespace MonoDevelop.CSharpRepl
 			
 			customFont = IdeApp.Preferences.CustomOutputPadFont;
 			
-			view.SetFont (customFont);
+			currentReplView.SetFont (customFont);
 		}
 
 		public void InputBlock(string block, string prefix_to_strip="")
 		{
-			this.view.WriteInput(block, prefix_to_strip);
+			this.currentReplView.WriteInput(block, prefix_to_strip);
 		}
 
 		public void LoadReferences(DotNetProject project)
@@ -203,7 +274,7 @@ namespace MonoDevelop.CSharpRepl
 						string file_name = config.CompiledOutputName.FullPath.ToString();
 						this.shell.loadAssembly(file_name);
 					} else 
-						this.view.WriteOutput(String.Format ("Cannot load non .NET project reference: {0}/{1}", project.Name, x.Reference));
+						this.currentReplView.WriteOutput(String.Format ("Cannot load non .NET project reference: {0}/{1}", project.Name, x.Reference));
 				}
 			}
 		}
@@ -213,8 +284,8 @@ namespace MonoDevelop.CSharpRepl
 		{
 			if (this.shell == null)
 			{
-				this.view.WriteOutput("Not connected.");
-				this.view.Prompt(true);
+				this.currentReplView.WriteOutput("Not connected.");
+				this.currentReplView.Prompt(true);
 				return;
 			}
 			
@@ -222,26 +293,26 @@ namespace MonoDevelop.CSharpRepl
 			try {
 				result = this.shell.evaluate(e.Text);
 			} catch (Exception ex) {
-				view.WriteOutput("Evaluation failed: " + ex.Message);
-				view.Prompt(true);
+				currentReplView.WriteOutput("Evaluation failed: " + ex.Message);
+				currentReplView.Prompt(true);
 				return;
 			}
 			
 			switch (result.Type)
 			{
 			case ResultType.FAILED:
-				view.WriteOutput(result.ResultMessage);
-				view.Prompt(false);
+				currentReplView.WriteOutput(result.ResultMessage);
+				currentReplView.Prompt(false);
 				break;
 			case ResultType.NEED_MORE_INPUT:
-				view.Prompt (false,true);
+				currentReplView.Prompt (false,true);
 				break;
 			case ResultType.SUCCESS_NO_OUTPUT:
-				view.Prompt(false);
+				currentReplView.Prompt(false);
 				break;
 			case ResultType.SUCCESS_WITH_OUTPUT:
-				view.WriteOutput(result.ResultMessage);	
-				view.Prompt(true);
+				currentReplView.WriteOutput(result.ResultMessage);	
+				currentReplView.Prompt(true);
 				break;
 			default:
 				throw new Exception("Unexpected state! Contact developers.");
@@ -290,10 +361,14 @@ namespace MonoDevelop.CSharpRepl
 		public void RedrawContent ()
 		{
 		}
-		
+
 		public Gtk.Widget Control {
 			get {
-				return view;
+				return content;
+			}
+			private set
+			{
+				content = value;
 			}
 		}
 		

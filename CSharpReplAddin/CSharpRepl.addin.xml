@@ -1,11 +1,11 @@
-<Addin id          = "CSharpRepl"
+<Addin id          = "CSharpInterative"
        namespace   = "MonoDevelop"
-       name        = "C# REPL Pad"
+       name        = "C# Interactive"
        author      = "Scott Stephens, Dustin Mays"
        copyright   = "MIT X11"
        url         = "https://github.com/nerdshark/CSharpReplAddin"
-       description = "Provides REPL pad for C# language"
-	   category    = "IDE Extensions"
+       description = "Provides an interactive C# REPL"
+	   category    = "IDE extensions"
        version     = "0.1">
 
 	<Runtime>
@@ -21,7 +21,7 @@
 		<Pad 
 			id = "MonoDevelop.CSharpRepl.ReplPad" 
 			class = "MonoDevelop.CSharpRepl.ReplPad" 
-			_label="ReplPad"
+			_label="C# REPL"
 			defaultLayout="*" 
 			defaultPlacement = "Bottom" 
 		/>

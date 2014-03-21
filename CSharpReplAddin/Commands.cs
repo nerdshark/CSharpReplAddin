@@ -11,25 +11,31 @@ using MonoDevelop.CSharp.Project;
 
 namespace MonoDevelop.CSharpRepl.Commands
 {
-	public enum ReplCommands { RunSelection, RunLine, LaunchReplForActiveDocument, LaunchGenericRepl, StopRepl }
+	public enum ReplCommands
+	{
+		RunSelection,
+		RunLine,
+		LaunchReplForActiveDocument,
+		LaunchGenericRepl,
+		StopRepl
+	}
 
-	internal static class CommandHelper 
+	internal static class CommandHelper
 	{
 		public static bool ActiveDocumentIsCSharp { get {
 				bool no_nulls = IdeApp.Workbench != null && IdeApp.Workbench.ActiveDocument != null;
 				DotNetProject project = no_nulls ? IdeApp.Workbench.ActiveDocument.Project as DotNetProject : null;
-				return project != null && project.LanguageName == "C#";
-			}
+					return project != null && project.LanguageName == "C#";
+				}
 		}
 
-		public static string SpacesAtStart(string input) {
-			return input.Substring(0,input.Length - input.TrimStart().Length);
-		}
-
-		public static ExtensibleTextEditor ActiveEditor
+		public static string SpacesAtStart (string input)
 		{
-			get
-			{
+			return input.Substring (0, input.Length - input.TrimStart ().Length);
+		}
+
+		public static ExtensibleTextEditor ActiveEditor {
+			get {
 				Mono.TextEditor.TextArea text_area = IdeApp.Workbench.RootWindow.Focus as Mono.TextEditor.TextArea;
 				ExtensibleTextEditor editor;
 				if (text_area != null)
@@ -50,22 +56,21 @@ namespace MonoDevelop.CSharpRepl.Commands
 				ExtensibleTextEditor editor = CommandHelper.ActiveEditor;				
 
 				if (editor != null) {
-					string spaces_at_start = CommandHelper.SpacesAtStart(editor.GetTextAt(editor.SelectedLines.First().Segment));
-					StringBuilder block_builder = new StringBuilder();
-					if (editor.SelectedText == null)
-					{
-						foreach (var line in editor.SelectedLines)
-						{
-							string x = editor.GetTextAt(line.Segment);
-							block_builder.AppendLine(x);
+					string spaces_at_start = CommandHelper.SpacesAtStart (editor.GetTextAt (editor.SelectedLines.First ().Segment));
+					StringBuilder block_builder = new StringBuilder ();
+					if (editor.SelectedText == null) {
+						foreach (var line in editor.SelectedLines) {
+							string x = editor.GetTextAt (line.Segment);
+							block_builder.AppendLine (x);
 						}
-						ReplPad.Instance.InputBlock(block_builder.ToString(), spaces_at_start);
+						ReplPad.Instance.InputBlock (block_builder.ToString (), spaces_at_start);
 					} else {
-						ReplPad.Instance.InputBlock(editor.SelectedText, spaces_at_start);
+						ReplPad.Instance.InputBlock (editor.SelectedText, spaces_at_start);
 					}
 				}
 			}
 		}
+
 		protected override void Update (CommandInfo info)
 		{
 			info.Visible = CommandHelper.ActiveDocumentIsCSharp;
@@ -82,27 +87,26 @@ namespace MonoDevelop.CSharpRepl.Commands
 
 				DocumentLine last_line = null;
 				if (editor != null) {
-					string spaces_at_start = CommandHelper.SpacesAtStart(editor.GetTextAt(editor.SelectedLines.First().Segment));
-					StringBuilder block_builder = new StringBuilder();
-					foreach (var line in editor.SelectedLines)
-					{
-						string x = editor.GetTextAt(line.Segment);
-						block_builder.AppendLine(x);
+					string spaces_at_start = CommandHelper.SpacesAtStart (editor.GetTextAt (editor.SelectedLines.First ().Segment));
+					StringBuilder block_builder = new StringBuilder ();
+					foreach (var line in editor.SelectedLines) {
+						string x = editor.GetTextAt (line.Segment);
+						block_builder.AppendLine (x);
 						last_line = line;
 					}
-					ReplPad.Instance.InputBlock(block_builder.ToString(), spaces_at_start);
-					editor.ClearSelection();
+					ReplPad.Instance.InputBlock (block_builder.ToString (), spaces_at_start);
+					editor.ClearSelection ();
 					editor.Caret.Line = last_line.LineNumber + 1;
 
 					int lines_checked = 0;
-					while (lines_checked < 5 && editor.GetTextAt(editor.SelectedLines.First().Segment).Trim() == "")
-					{
+					while (lines_checked < 5 && editor.GetTextAt (editor.SelectedLines.First ().Segment).Trim () == "") {
 						lines_checked += 1;
 						editor.Caret.Line += 1;
 					}
 				}
 			}
 		}
+
 		protected override void Update (CommandInfo info)
 		{
 			info.Visible = CommandHelper.ActiveDocumentIsCSharp;
@@ -110,19 +114,18 @@ namespace MonoDevelop.CSharpRepl.Commands
 		}
 	}
 
-	public class LaunchReplForActiveDocumentHandler : CommandHandler 
+	public class LaunchReplForActiveDocumentHandler : CommandHandler
 	{
-		protected override void Run()
+		protected override void Run ()
 		{
 			DotNetProject project = IdeApp.Workbench.ActiveDocument.Project as DotNetProject;
 
-			if (project != null && ReplPad.Instance != null)
-			{
-				DotNetProjectConfiguration config = IdeApp.Workspace.ActiveConfiguration.GetConfiguration(project) as DotNetProjectConfiguration;
+			if (project != null && ReplPad.Instance != null) {
+				DotNetProjectConfiguration config = IdeApp.Workspace.ActiveConfiguration.GetConfiguration (project) as DotNetProjectConfiguration;
 				CSharpCompilerParameters compiler_parameters = config.CompilationParameters as CSharpCompilerParameters;
-                ReplPad.Instance.Start(compiler_parameters.PlatformTarget);
+				ReplPad.Instance.Start (compiler_parameters.PlatformTarget);
 				if (ReplPad.Instance.Running)
-					ReplPad.Instance.LoadReferences(project);
+					ReplPad.Instance.LoadReferences (project);
 			}
 		}
 
@@ -133,12 +136,13 @@ namespace MonoDevelop.CSharpRepl.Commands
 		}
 	}
 
-	public class LaunchGenericReplHandler : CommandHandler 
+	public class LaunchGenericReplHandler : CommandHandler
 	{
-		protected override void Run()
+		protected override void Run ()
 		{
-			ReplPad.Instance.Start();
+			ReplPad.Instance.Start ();
 		}
+
 		protected override void Update (CommandInfo info)
 		{
 			info.Enabled = ReplPad.Instance != null && !ReplPad.Instance.Running;
@@ -150,15 +154,14 @@ namespace MonoDevelop.CSharpRepl.Commands
 	{
 		protected override void Run ()
 		{
-			ReplPad.Instance.Stop();
+			ReplPad.Instance.Stop ();
 		}
 
-		protected override void Update(CommandInfo info)
+		protected override void Update (CommandInfo info)
 		{
 			info.Visible = true;
 			info.Enabled = ReplPad.Instance != null && ReplPad.Instance.Running;
 		}
-
 	}
 }
 

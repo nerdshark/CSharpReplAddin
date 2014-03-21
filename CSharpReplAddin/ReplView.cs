@@ -395,6 +395,11 @@ namespace MonoDevelop.CSharpRepl.Components
 		public string BlockEnd { get; set; }
 		
 		public event EventHandler<ConsoleInputEventArgs> ConsoleInput;
+
+		protected override void OnRemoved(Widget widget)
+		{
+			base.OnRemoved (widget);
+		}
 	}
 
 	public enum PromptState { None, Regular, Multiline }

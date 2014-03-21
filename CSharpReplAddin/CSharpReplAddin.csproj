@@ -11,6 +11,7 @@
     <AssemblyName>CSharpRepl</AssemblyName>
     <MonoDevelopBasePath>C:\Program Files %28x86%29\Xamarin Studio\</MonoDevelopBasePath>
     <MonoDevelopExecutableName>Xamarin Studio.exe</MonoDevelopExecutableName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMac|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -43,12 +44,26 @@
     <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="MonoDevelop.CSharpBinding">
-      <Package>monodevelop-core-addins</Package>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="Mono.CSharp">
       <Private>True</Private>
+    </Reference>
+    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="System.Core" />
+    <Reference Include="NetMQ">
+      <HintPath>..\packages\NetMQ.3.3.0.8\lib\net40\NetMQ.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Posix" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <!-- Need to add Windows MD references here -->
+  </ItemGroup>
+  <ItemGroup Condition=" '$(OS)' != 'Windows_NT' ">
+    <Reference Include="MonoDevelop.CSharpBinding">
+      <Package>monodevelop-core-addins</Package>
     </Reference>
     <Reference Include="MonoDevelop.Core">
       <Package>monodevelop</Package>
@@ -56,10 +71,6 @@
     <Reference Include="MonoDevelop.Ide">
       <Package>monodevelop</Package>
     </Reference>
-    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="MonoDevelop.SourceEditor2">
       <Package>monodevelop-core-addins</Package>
     </Reference>
@@ -72,10 +83,6 @@
     <Reference Include="ICSharpCode.NRefactory.CSharp">
       <Package>monodevelop</Package>
     </Reference>
-    <Reference Include="System.Core" />
-    <Reference Include="NetMQ">
-      <HintPath>..\packages\NetMQ.3.3.0.8\lib\net40\NetMQ.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -83,6 +90,8 @@
     <Compile Include="StreamOutputter.cs" />
     <Compile Include="ReplView.cs" />
     <Compile Include="Commands.cs" />
+    <Compile Include="gtk-gui\generated.cs" />
+    <Compile Include="gtk-gui\MonoDevelop.CSharpRepl.NotebookPageLabel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -125,4 +134,9 @@
       <BRSearchPathDlls Remove="*" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <EmbeddedResource Include="gtk-gui\gui.stetic">
+      <LogicalName>gui.stetic</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
