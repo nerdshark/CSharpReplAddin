@@ -311,7 +311,6 @@ namespace MonoDevelop.CSharpRepl
 			var session = new ReplSession (view, proc, port);
 			replSessions.Add (view, session);
 			//Running = true;
-			nextPort++;
 			Thread.Sleep (1000); // Give _repl_process time to start up before we let anybody do anything with it
 		}
 
