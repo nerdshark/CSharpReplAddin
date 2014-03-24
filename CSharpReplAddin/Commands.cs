@@ -22,11 +22,12 @@ namespace MonoDevelop.CSharpRepl.Commands
 
 	internal static class CommandHelper
 	{
-		public static bool ActiveDocumentIsCSharp { get {
+		public static bool ActiveDocumentIsCSharp {
+			get {
 				bool no_nulls = IdeApp.Workbench != null && IdeApp.Workbench.ActiveDocument != null;
 				DotNetProject project = no_nulls ? IdeApp.Workbench.ActiveDocument.Project as DotNetProject : null;
-					return project != null && project.LanguageName == "C#";
-				}
+				return project != null && project.LanguageName == "C#";
+			}
 		}
 
 		public static string SpacesAtStart (string input)

@@ -3,6 +3,8 @@ using System.IO;
 using System.Collections;
 using Mono.CSharp;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MonoDevelop.CSharpRepl
 {
@@ -15,6 +17,17 @@ namespace MonoDevelop.CSharpRepl
 		Result getVariables ();
 
 		Result getUsings ();
+	}
+
+	public interface IAsyncCSharpRepl
+	{
+		Task<Result> evaluate (string input);
+
+		Task<Result> loadAssembly (string file);
+
+		Task<Result> getVariables ();
+
+		Task<Result> getUsings ();
 	}
 
 	public class CSharpRepl : ICSharpRepl
@@ -49,26 +62,38 @@ namespace MonoDevelop.CSharpRepl
 		public Result evaluate (string input)
 		{
 			Result output;
-			try {
+			try
+			{
 				object result;
 				bool result_set;
 				input = this.InnerEvaluator.Evaluate (input, out result, out result_set);
 
-				if (this.Printer.ErrorsCount > 0) {
+				if (this.Printer.ErrorsCount > 0)
+				{
 					output = new Result (ResultType.FAILED, this.CompilerErrorWriter.GetStringBuilder ().ToString ());
 					this.CompilerErrorWriter.GetStringBuilder ().Clear ();
-				} else if (result_set) {
+				}
+				else
+				if (result_set)
+				{
 					StringWriter output_writer = new StringWriter ();
 					PrettyPrint (output_writer, result);
 					output_writer.Close ();
 					output = new Result (ResultType.SUCCESS_WITH_OUTPUT, output_writer.GetStringBuilder ().ToString ());
-				} else if (input == null) {
+				}
+				else
+				if (input == null)
+				{
 					output = new Result (ResultType.SUCCESS_NO_OUTPUT, null);
-				} else {
+				}
+				else
+				{
 					output = new Result (ResultType.NEED_MORE_INPUT, null);
 				}
 
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				output = new Result (ResultType.FAILED, e.ToString ());
 			}
 			this.Printer.Reset ();
@@ -77,40 +102,52 @@ namespace MonoDevelop.CSharpRepl
 
 		public Result loadAssembly (string name_or_path)
 		{
-			try {
+			try
+			{
 				this.InnerEvaluator.LoadAssembly (name_or_path);
 				return new Result (ResultType.SUCCESS_NO_OUTPUT, null);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
 		public Result loadPackage (string package)
 		{
-			try {
+			try
+			{
 				InteractiveBase.LoadPackage (package);
 				return new Result (ResultType.SUCCESS_NO_OUTPUT, null);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
 		public Result getVariables ()
 		{
-			try {
+			try
+			{
 				string vars = this.InnerEvaluator.GetVars ();
 				return new Result (ResultType.SUCCESS_WITH_OUTPUT, vars);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
 
 		public Result getUsings ()
 		{
-			try {
+			try
+			{
 				string usings = this.InnerEvaluator.GetUsing ();
 				return new Result (ResultType.SUCCESS_WITH_OUTPUT, usings);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				return new Result (ResultType.FAILED, e.Message);
 			}
 		}
@@ -129,46 +166,49 @@ namespace MonoDevelop.CSharpRepl
 
 		static void EscapeChar (TextWriter output, char c)
 		{
-			if (c == '\'') {
+			if (c == '\'')
+			{
 				output.Write ("'\\''");
 				return;
 			}
-			if (c > 32) {
+			if (c > 32)
+			{
 				output.Write ("'{0}'", c);
 				return;
 			}
-			switch (c) {
-			case '\a':
-				output.Write ("'\\a'");
-				break;
+			switch (c)
+			{
+				case '\a':
+					output.Write ("'\\a'");
+					break;
 				
-			case '\b':
-				output.Write ("'\\b'");
-				break;
+				case '\b':
+					output.Write ("'\\b'");
+					break;
 				
-			case '\n':
-				output.Write ("'\\n'");
-				break;
+				case '\n':
+					output.Write ("'\\n'");
+					break;
 				
-			case '\v':
-				output.Write ("'\\v'");
-				break;
+				case '\v':
+					output.Write ("'\\v'");
+					break;
 				
-			case '\r':
-				output.Write ("'\\r'");
-				break;
+				case '\r':
+					output.Write ("'\\r'");
+					break;
 				
-			case '\f':
-				output.Write ("'\\f'");
-				break;
+				case '\f':
+					output.Write ("'\\f'");
+					break;
 				
-			case '\t':
-				output.Write ("'\\t");
-				break;
+				case '\t':
+					output.Write ("'\\t");
+					break;
 				
-			default:
-				output.Write ("'\\x{0:x}", (int)c);
-				break;
+				default:
+					output.Write ("'\\x{0:x}", (int)c);
+					break;
 			}
 		}
 		// Some types (System.Json.JsonPrimitive) implement
@@ -178,11 +218,15 @@ namespace MonoDevelop.CSharpRepl
 		static internal bool WorksAsEnumerable (object obj)
 		{
 			IEnumerable enumerable = obj as IEnumerable;
-			if (enumerable != null) {
-				try {
+			if (enumerable != null)
+			{
+				try
+				{
 					enumerable.GetEnumerator ();
 					return true;
-				} catch {
+				}
+				catch
+				{
 					// nothing, we return false below
 				}
 			}
@@ -191,35 +235,48 @@ namespace MonoDevelop.CSharpRepl
 
 		internal static void PrettyPrint (TextWriter output, object result)
 		{
-			if (result == null) {
+			if (result == null)
+			{
 				p (output, "null");
 				return;
 			}
 			
-			if (result is Array) {
+			if (result is Array)
+			{
 				Array a = (Array)result;
 				
 				p (output, "{ ");
 				int top = a.GetUpperBound (0);
-				for (int i = a.GetLowerBound (0); i <= top; i++) {
+				for (int i = a.GetLowerBound (0); i <= top; i++)
+				{
 					PrettyPrint (output, a.GetValue (i));
 					if (i != top)
 						p (output, ", ");
 				}
 				p (output, " }");
-			} else if (result is bool) {
+			}
+			else
+			if (result is bool)
+			{
 				if ((bool)result)
 					p (output, "true");
 				else
 					p (output, "false");
-			} else if (result is string) {
+			}
+			else
+			if (result is string)
+			{
 				p (output, String.Format ("\"{0}\"", EscapeString ((string)result)));
-			} else if (result is IDictionary) {
+			}
+			else
+			if (result is IDictionary)
+			{
 				IDictionary dict = (IDictionary)result;
 				int top = dict.Count, count = 0;
 				
 				p (output, "{");
-				foreach (DictionaryEntry entry in dict) {
+				foreach (DictionaryEntry entry in dict)
+				{
 					count++;
 					p (output, "{ ");
 					PrettyPrint (output, entry.Key);
@@ -231,19 +288,28 @@ namespace MonoDevelop.CSharpRepl
 						p (output, " }");
 				}
 				p (output, "}");
-			} else if (WorksAsEnumerable (result)) {
+			}
+			else
+			if (WorksAsEnumerable (result))
+			{
 				int i = 0;
 				p (output, "{ ");
-				foreach (object item in (IEnumerable) result) {
+				foreach (object item in (IEnumerable) result)
+				{
 					if (i++ != 0)
 						p (output, ", ");
 					
 					PrettyPrint (output, item);
 				}
 				p (output, " }");
-			} else if (result is char) {
+			}
+			else
+			if (result is char)
+			{
 				EscapeChar (output, (char)result);
-			} else {
+			}
+			else
+			{
 				p (output, result.ToString ());
 			}
 		}

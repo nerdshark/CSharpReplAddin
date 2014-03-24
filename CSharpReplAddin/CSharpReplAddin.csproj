@@ -9,11 +9,10 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MonoDevelop.CSharpRepl</RootNamespace>
     <AssemblyName>CSharpRepl</AssemblyName>
-
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-  	<MonoDevelopBasePath>C:\Program Files (x86)\Xamarin Studio\</MonoDevelopBasePath>
+    <MonoDevelopBasePath>C:\Program Files (x86)\Xamarin Studio\</MonoDevelopBasePath>
     <MonoDevelopExecutableName>Xamarin Studio.exe</MonoDevelopExecutableName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMac|AnyCPU' ">
@@ -42,55 +41,68 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Optimize>false</Optimize>
+    <!--<CustomCommands>
+      <CustomCommands>
+        <Command type="Execute" command="C:\Progra~2\Xamari~1\bin\XamarinStudio.exe" workingdir="C:\Progra~2\Xamari~1\bin\" externalConsole="True" pauseExternalConsole="True">
+        <EnvironmentVariables>
+        <Variable name="MONODEVELOP_DEV_ADDINS" value="${TargetDir}" />
+      </EnvironmentVariables>
+    </Command>
+      </CustomCommands>
+    </CustomCommands>
+    <Externalconsole>true</Externalconsole>
+    -->
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Execute" command="C:\Progra~2\Xamari~1\bin\XamarinStudio.exe" workingdir="C:\Progra~2\Xamari~1\bin\">
+          <EnvironmentVariables>
+            <Variable name="MONODEVELOP_DEV_ADDINS" value="${TargetDir}" />
+          </EnvironmentVariables>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
-  	<Reference Include="System" />
+    <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.CSharp">
-    	<Private>True</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Mono.Posix" />
-	<Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f"/>
+    <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="NetMQ">
       <HintPath>..\packages\NetMQ.3.3.0.8\lib\net40\NetMQ.dll</HintPath>
-    </Reference>      
+    </Reference>
     <Reference Include="MonoDevelop.CSharpBinding">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)AddIns\BackendBindings\MonoDevelop.CSharpBinding.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\AddIns\BackendBindings\MonoDevelop.CSharpBinding.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoDevelop.Core">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)bin\MonoDevelop.Core.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\bin\MonoDevelop.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoDevelop.Ide">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)bin\MonoDevelop.Ide.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\bin\MonoDevelop.Ide.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoDevelop.SourceEditor2">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)AddIns\DisplayBindings\SourceEditor\MonoDevelop.SourceEditor2.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\AddIns\DisplayBindings\SourceEditor\MonoDevelop.SourceEditor2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.TextEditor">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)bin\Mono.TextEditor.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\bin\Mono.TextEditor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="ICSharpCode.NRefactory">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)bin\ICSharpCode.NRefactory.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\bin\ICSharpCode.NRefactory.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="ICSharpCode.NRefactory.CSharp">
-      <Package Condition=" '$(OS)' != 'Windows_NT' ">monodevelop-core-addins</Package>
-      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">$(MonoDevelopBasePath)bin\ICSharpCode.NRefactory.CSharp.dll</HintPath>
+      <HintPath Condition=" '$(OS)' == 'Windows_NT' ">C:\Program Files %28x86%29\Xamarin Studio\bin\ICSharpCode.NRefactory.CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -100,6 +112,7 @@
     <Compile Include="StreamOutputter.cs" />
     <Compile Include="ReplView.cs" />
     <Compile Include="Commands.cs" />
+    <Compile Include="IInteractiveSession.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -126,8 +139,6 @@
       <Name>CSharpReplServer</Name>
     </ProjectReference>
   </ItemGroup>
- 
-
   <!---<Target Name="BeforeResolveReferences" Condition=" '$(OS)' == 'Windows_NT' ">
     <ItemGroup>
       <RequiredReferences Include=""/>

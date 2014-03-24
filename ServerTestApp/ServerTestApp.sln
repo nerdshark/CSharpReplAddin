@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerTestApp", "ServerTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpReplLibrary", "..\CSharpReplLibrary\CSharpReplLibrary.csproj", "{192043DA-F32A-4DEA-A010-CD2C3971A34B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpReplServer", "..\CSharpReplServer\CSharpReplServer.csproj", "{DA44509C-FB53-45FA-8493-F7BCDBA19E45}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,6 +21,10 @@ Global
 		{8C16593A-0FC9-453A-BAC7-DF388786C323}.Debug|x86.Build.0 = Debug|x86
 		{8C16593A-0FC9-453A-BAC7-DF388786C323}.Release|x86.ActiveCfg = Release|x86
 		{8C16593A-0FC9-453A-BAC7-DF388786C323}.Release|x86.Build.0 = Release|x86
+		{DA44509C-FB53-45FA-8493-F7BCDBA19E45}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA44509C-FB53-45FA-8493-F7BCDBA19E45}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA44509C-FB53-45FA-8493-F7BCDBA19E45}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA44509C-FB53-45FA-8493-F7BCDBA19E45}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = ServerTestApp\ServerTestApp.csproj
