@@ -1,39 +1,54 @@
 using System;
 using MonoDevelop.CSharpRepl;
 using System.Threading;
+using System.Collections.Generic;
+using System.Collections;
+using System.Threading.Tasks;
 
 namespace ServerTestApp
 {
 	public class MainClass
 	{
+		public static void PrintResult (Result result)
+		{
+
+			Console.WriteLine ("Result Type: {0}\nMessage:\n{1}", result.Type, result.ResultMessage);
+		}
+
+		public async static Task RunTests (CSharpReplServerProxy proxy)
+		{
+			var output = await proxy.evaluate ("var x = 10;");
+			PrintResult (output);
+
+			output = await proxy.evaluate ("x");
+			PrintResult (output);
+
+			output = await proxy.evaluate ("for (int ii = 0; ii < 3; ii++) { Console.WriteLine(ii); }");
+			PrintResult (output);
+
+			output = await proxy.evaluate ("riteLine(ii); }");
+			PrintResult (output);
+
+		}
+
 		public static void Main (string[] args)
 		{
-			Console.WriteLine ("derp");
-			var proxy = new CSharpReplServerProxy ("tcp://localhost:33333");
-			proxy.Start ();
-			//Thread.Sleep (1000);
+			var proxies = new List<CSharpReplServerProxy> ();
+			proxies.Add (new CSharpReplServerProxy ("127.0.0.1", 33333));
+			proxies.Add (new CSharpReplServerProxy ("tcp://127.0.0.1:33333"));
 
-			var output = proxy.evaluate ("var x = 10;");
-			output.Wait ();
-			Console.WriteLine ("Result Type: {0}\nMessage:\n{1}", output.Result.Type, output.Result.ResultMessage);
-			/*var output = proxy.evaluate ("var x = 10;")
-				.ContinueWith (task => {
-				Console.WriteLine ("Result Type: {0}\nMessage:\n{1}", task.Result.Type, task.Result.ResultMessage);
-			});*/
-			
+			for (int testIter = 0; testIter < proxies.Count; testIter++) {
+				Console.WriteLine ("Test iteration {0}\n", testIter);
+				var proxy = proxies [testIter];
+				proxy.Start ();
+				RunTests (proxy).Wait (); 
+			}
 
-			/*output = proxy.evaluate ("for (int ii = 0; ii < 3; ii++) { Console.WriteLine(ii); }").ContinueWith (task => {
-				Console.WriteLine ("Result Type: {0}\nMessage:\n{1}", task.Result.Type, task.Result.ResultMessage);
-		});*/
-
-//			var repl = new CSharpRepl();
-//			var output = repl.evaluate("10*10;");
-
-			//Console.WriteLine(output.Result.Type.ToString());
-//			output = repl.evaluate("var x = 10;");
-//			Console.WriteLine("{0}: {1}",output.ResultType.ToString(),output.Result);
-//			output = repl.evaluate("x;");
-//			Console.WriteLine("{0}: {1}",output.ResultType.ToString(),output.Result);
+			Console.WriteLine ("Disposing proxies");
+			foreach (var proxy in proxies) {
+				proxy.Dispose ();
+			}
+			Console.WriteLine ("Finished disposing");
 		}
 	}
 }
