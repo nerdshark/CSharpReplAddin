@@ -113,6 +113,9 @@
     <Compile Include="ReplView.cs" />
     <Compile Include="Commands.cs" />
     <Compile Include="IInteractiveSession.cs" />
+    <Compile Include="gtk-gui\generated.cs" />
+    <Compile Include="ConnectToReplDialog.cs" />
+    <Compile Include="gtk-gui\MonoDevelop.CSharpRepl.ConnectToReplDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -155,4 +158,9 @@
     </CreateProperty>
   </Target>
 -->
+  <ItemGroup>
+    <EmbeddedResource Include="gtk-gui\gui.stetic">
+      <LogicalName>gui.stetic</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
