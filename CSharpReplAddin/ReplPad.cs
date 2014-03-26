@@ -46,12 +46,13 @@ using ICSharpCode.NRefactory.CSharp.Analysis;
 
 //using MonoDevelop.Ide.Tasks;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace MonoDevelop.CSharpRepl
 {
 	public class ReplPad: IPadContent
 	{
-		private class ReplSession
+		private class ReplSession : IDisposable
 		{
 			private readonly IAsyncCSharpRepl repl;
 
@@ -88,6 +89,17 @@ namespace MonoDevelop.CSharpRepl
 				var tmprepl = new CSharpReplServerProxy (String.Format ("tcp://127.0.0.1:{0}", port));
 				tmprepl.Start ();
 				repl = tmprepl;
+			}
+
+			private bool disposed;
+
+			public void Dispose ()
+			{
+				if (!disposed) return;
+				if (repl != null) ((CSharpReplServerProxy)repl).Dispose ();
+				if (stderr != null) stderr.Stop ();
+				if (stdout != null) stdout.Stop ();
+				if (process != null) process.Close ();
 			}
 		}
 
@@ -137,15 +149,15 @@ namespace MonoDevelop.CSharpRepl
 			};
 			*/
 			toolbar = CreateToolbar ();
-			toolbar.Add (newReplButton);
+			//toolbar.Add (newReplButton);
 
-			window.GetToolbar (PositionType.Right).Add (toolbar);
+			window.GetToolbar (PositionType.Right).Add (newReplButton);
 			window.GetToolbar (PositionType.Right).Visible = true;
 			window.GetToolbar (PositionType.Right).ShowAll ();
 
 			layout = new HBox ();
 			layout.PackStart (notebook, true, true, 0);
-			//layout.PackEnd (toolbar, false, true, 0);
+			layout.PackEnd (toolbar, false, true, 0);
 			Control = layout;
 			Control.ShowAll ();
 			IdeApp.Preferences.CustomOutputPadFontChanged += HandleCustomOutputPadFontChanged;
@@ -237,7 +249,6 @@ namespace MonoDevelop.CSharpRepl
 				}
 				if (notebook.Children.Contains (view))
 					notebook.Remove (view);
-				view.Dispose ();
 			}
 		}
 
@@ -382,96 +393,55 @@ namespace MonoDevelop.CSharpRepl
 			}
 			var session = replSessions [view];
 
+
 			if (session == null)
 			{
 				view.WriteOutput ("Not connected.");
 				view.Prompt (true);
 				return;
 			}
-			
-			//Result result;
-			/*Task.Factory.StartNew<Result> (text =>
+			else
 			{
-				var result = session.Repl.evaluate (((string)text));
-				result.Wait ();
-				return result.Result;
-			}, e.Text, TaskCreationOptions.None).*/
-
-
-			session.Repl.evaluate (e.Text).ContinueWith (task =>
-			{
-
-				//if (task.IsFaulted) 
-				var result = task.Result;
-				switch (result.Type)
+				session.Repl.evaluate (e.Text).ContinueWith (task =>
 				{
-					case ResultType.FAILED:
-						view.WriteOutput (result.ResultMessage);
-						view.Prompt (false);
-						break;
-					case ResultType.NEED_MORE_INPUT:
-						view.Prompt (false, true);
-						break;
-					case ResultType.SUCCESS_NO_OUTPUT:
-						view.Prompt (false);
-						break;
-					case ResultType.SUCCESS_WITH_OUTPUT:
-						view.WriteOutput (result.ResultMessage);	
-						view.Prompt (true);
-						break;
-					default:
-						throw new Exception ("Unexpected state! Contact developers.");
-				}
-			});/*
-			try {
-
-				result = session.Repl.evaluate (e.Text);
-			} catch (Exception ex) {
-				view.WriteOutput ("Evaluation failed: " + ex.Message);
-				view.Prompt (true);
-				return;
-			}*/
-			
-
+					var result = task.Result;
+					switch (result.Type)
+					{
+						case ResultType.FAILED:
+							Gtk.Application.Invoke (delegate
+							{
+								view.WriteOutput (result.ResultMessage);
+								view.Prompt (false);
+							});
+							break;
+						case ResultType.NEED_MORE_INPUT:
+							Gtk.Application.Invoke (delegate
+							{
+								view.Prompt (false, true);
+							});
+							break;
+						case ResultType.SUCCESS_NO_OUTPUT:
+							Gtk.Application.Invoke (delegate
+							{
+								view.Prompt (false);
+							});
+							break;
+						case ResultType.SUCCESS_WITH_OUTPUT:
+							Gtk.Application.Invoke (delegate
+							{
+								view.WriteOutput (result.ResultMessage);
+								view.Prompt (true);
+							});
+							
+							break;
+						default:
+							throw new Exception ("Unexpected state! Contact developers.");
+							break;
+					}
+				});
+			}
 		}
-		//		void PrintValue (ObjectValue val)
-		//		{
-		//			string result = val.Value;
-		//			if (string.IsNullOrEmpty (result)) {
-		//				if (val.IsNotSupported)
-		//					result = GettextCatalog.GetString ("Expression not supported.");
-		//				else if (val.IsError || val.IsUnknown)
-		//					result = GettextCatalog.GetString ("Evaluation failed.");
-		//				else
-		//					result = string.Empty;
-		//			}
-		//			view.WriteOutput (result);
-		//		}
-		//
-		//		void WaitForCompleted (ObjectValue val)
-		//		{
-		//			int iteration = 0;
-		//
-		//			GLib.Timeout.Add (100, delegate {
-		//				if (!val.IsEvaluating) {
-		//					if (iteration >= 5)
-		//						view.WriteOutput ("\n");
-		//					PrintValue (val);
-		//					view.Prompt (true);
-		//					return false;
-		//				}
-		//				if (++iteration == 5)
-		//					view.WriteOutput (GettextCatalog.GetString ("Evaluating") + " ");
-		//				else if (iteration > 5 && (iteration - 5) % 10 == 0)
-		//					view.WriteOutput (".");
-		//				else if (iteration > 300) {
-		//					view.WriteOutput ("\n" + GettextCatalog.GetString ("Timed out."));
-		//					view.Prompt (true);
-		//					return false;
-		//				}
-		//				return true;
-		//			});
-		//		}
+
 		public void RedrawContent ()
 		{
 		}
