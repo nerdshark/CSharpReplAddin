@@ -89,6 +89,8 @@ namespace MonoDevelop.CSharpRepl
 			this.DefaultWidth = 425;
 			this.DefaultHeight = 119;
 			this.Show ();
+			this.buttonCancel.Clicked += new global::System.EventHandler (this.OnButtonCancelClicked);
+			this.buttonOk.Clicked += new global::System.EventHandler (this.OnButtonOkClicked);
 		}
 	}
 }

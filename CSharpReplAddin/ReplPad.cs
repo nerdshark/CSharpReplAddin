@@ -75,16 +75,29 @@ namespace MonoDevelop.CSharpRepl
 
 			public int Port { get { return port; } }
 
-			public ReplSession (ReplView view, Process proc, int port)
+			public ReplSession (ReplView view, string address)
+			{
+				replView = view;
+				this.port = port;
+
+				var tmprepl = new CSharpReplServerProxy (address);
+				tmprepl.Start ();
+				repl = tmprepl;
+			}
+
+			public ReplSession (ReplView view, int port, Process proc = null)
 			{
 				replView = view;
 				process = proc;
 				this.port = port;
 
-				stderr = new StreamOutputter (proc.StandardError, replView);
-				stdout = new StreamOutputter (proc.StandardOutput, replView);
-				Stderr.Start ();
-				Stdout.Start ();
+				if (proc != null)
+				{
+					stderr = new StreamOutputter (proc.StandardError, replView);
+					stdout = new StreamOutputter (proc.StandardOutput, replView);
+					Stderr.Start ();
+					Stdout.Start ();
+				}
 
 				var tmprepl = new CSharpReplServerProxy (String.Format ("tcp://127.0.0.1:{0}", port));
 				tmprepl.Start ();
@@ -100,6 +113,7 @@ namespace MonoDevelop.CSharpRepl
 				if (stderr != null) stderr.Stop ();
 				if (stdout != null) stdout.Stop ();
 				if (process != null) process.Close ();
+				disposed = true;
 			}
 		}
 
@@ -121,6 +135,7 @@ namespace MonoDevelop.CSharpRepl
 		HBox layout;
 		Toolbar toolbar;
 		ToolButton newReplButton;
+		ToolButton connectToReplButton;
 		Dictionary<ReplView, ReplSession> replSessions;
 
 		public void Initialize (IPadWindow window)
@@ -140,7 +155,7 @@ namespace MonoDevelop.CSharpRepl
 			notebook.Scrollable = true;
 
 			newReplButton = CreateNewReplButton ();
-
+			connectToReplButton = ConnectToReplButton ();
 			/*notebook.Added += (object o, AddedArgs args) => {
 				currentReplView = (args.Widget as ReplView);
 			};*/
@@ -152,6 +167,7 @@ namespace MonoDevelop.CSharpRepl
 			//toolbar.Add (newReplButton);
 
 			window.GetToolbar (PositionType.Right).Add (newReplButton);
+			window.GetToolbar (PositionType.Right).Add (connectToReplButton);
 			window.GetToolbar (PositionType.Right).Visible = true;
 			window.GetToolbar (PositionType.Right).ShowAll ();
 
@@ -181,6 +197,17 @@ namespace MonoDevelop.CSharpRepl
 			{
 				var view = AddRepl ();
 				StartInteractiveSession (view);
+			};
+			return button;
+		}
+
+		private ToolButton ConnectToReplButton ()
+		{
+			var button = new ToolButton (Gtk.Stock.Connect);
+			button.Clicked += (object sender, EventArgs e) =>
+			{
+				var dialog = new ConnectToReplDialog (this);
+				dialog.ShowAll ();
 			};
 			return button;
 		}
@@ -317,11 +344,18 @@ namespace MonoDevelop.CSharpRepl
 			start_info.RedirectStandardOutput = true;
 
 			var proc = config.TargetRuntime.ExecuteAssembly (start_info);
-			//_repl_process = Process.Start (start_info);
 
-			var session = new ReplSession (view, proc, port);
+			var session = new ReplSession (view, port, proc);
 			replSessions.Add (view, session);
 			//Running = true;
+			Thread.Sleep (1000); // Give _repl_process time to start up before we let anybody do anything with it
+		}
+
+		internal void ConnectToInteractiveSession (string address)
+		{
+			var view = AddRepl ();
+			var session = new ReplSession (view, address);
+			replSessions.Add (view, session);
 			Thread.Sleep (1000); // Give _repl_process time to start up before we let anybody do anything with it
 		}
 
