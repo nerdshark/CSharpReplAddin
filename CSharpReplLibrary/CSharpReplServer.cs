@@ -10,103 +10,120 @@ using Mono.CSharp;
 
 namespace MonoDevelop.CSharpRepl
 {
-	public class CSharpReplServer
+	public class CSharpReplServer : IDisposable
 	{
-		private readonly int PortStartRange = 1000;
 		private CancellationTokenSource cancellationTokenSource;
-		private readonly NetMQContext nmqContext;
-		private readonly NetMQScheduler nmqScheduler;
+		private NetMQContext nmqContext;
+		private NetMQScheduler nmqScheduler;
+		private Poller nmqPoller;
+		private NetMQSocket nmqServer;
+		private Task serverTask;
 
-		private int Port { get; set; }
+		private CSharpRepl repl { get; set; }
 
-		private CSharpRepl Repl { get; set; }
+		public Uri Address { get; private set; }
 
-		private int AutoPort { get; set; }
-		//
-		public CSharpReplServer (int p, NetMQContext ctx = null)
+		public CSharpReplServer (string protocol, string host, int port) : this (String.Format ("{0}://{0}:{1}", protocol, host, port))
 		{
-			this.Port = p;
-			AutoPort = GetOpenPort ();
-
-			nmqContext = NetMQContext.Create ();
-			//nmqScheduler = new NetMQScheduler (nmqContext);
-			cancellationTokenSource = new CancellationTokenSource ();
 		}
 
-		internal int GetOpenPort ()
+		public CSharpReplServer (string host, int port) : this (String.Format ("tcp://{0}:{1}", host, port))
 		{
-			var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties ();
-			var tcpEndpoints = ipGlobalProperties.GetActiveTcpListeners ();
-			var query = tcpEndpoints.OrderBy (endpoint => endpoint.Port)
-				.Where (endpoint => endpoint.Port >= PortStartRange)
-				.Select (endpoint => endpoint.Port).Distinct ().ToList ();
+		}
 
-			int freePort = PortStartRange;
-			foreach (var port in query)
-			{
-				if (port != PortStartRange)
-					break;
-				freePort++;
+		public CSharpReplServer (string uri) : this (new Uri (uri))
+		{
+		}
+
+		public CSharpReplServer (Uri uri) : this ()
+		{
+			if (uri == null)
+				throw new ArgumentNullException ("uri");
+
+			var builder = new UriBuilder (uri);
+
+			if (string.IsNullOrWhiteSpace (builder.Host))
+				throw new ArgumentException ("Must supply a valid hostname or IP", "uri");
+
+			if (string.IsNullOrWhiteSpace (builder.Scheme)) {
+				builder.Scheme = "tcp";
+				// debug message here
 			}
-			return freePort;
+
+			if (builder.Port == 0) {
+				builder.Port = NetworkUtilities.GetOpenPort ();
+				// debug message here
+			}
+
+			Address = builder.Uri;
+		}
+
+		protected CSharpReplServer ()
+		{
+			nmqContext = NetMQContext.Create ();
+			repl = new CSharpRepl ();
+			cancellationTokenSource = new CancellationTokenSource ();
 		}
 
 		public async Task Start ()
 		{
+			ThrowIfDisposed ();
 			var ct = cancellationTokenSource.Token;
-			await Task.Factory.StartNew (() =>
-			{
+
+			nmqPoller = new Poller ();
+			nmqScheduler = new NetMQScheduler (nmqContext, nmqPoller);
+			nmqServer = nmqContext.CreateResponseSocket ();
+			nmqServer.Bind (Address.AbsoluteUri.TrimEnd ('/'));
+
+			serverTask = Task.Factory.StartNew (() => {
 				ct.ThrowIfCancellationRequested ();
-				Repl = new CSharpRepl ();
-				using (var server = nmqContext.CreateResponseSocket ())
-				{
-					server.Bind (String.Format ("tcp://127.0.0.1:{0}", Port));
 
-					while (true)
-					{
-						if (ct.IsCancellationRequested)
-						{
-							// clean up here
-							ct.ThrowIfCancellationRequested ();
-						}
-						var msg = server.Receive ();
-						var request = Request.Deserialize (msg);
-						var result = Handle (request);
-
-						byte[] output_buffer = result.Serialize ();
-						server.Send (output_buffer);
+				while (true) {
+					if (ct.IsCancellationRequested) {
+						// clean up here
+						ct.ThrowIfCancellationRequested ();
 					}
+					var msg = nmqServer.Receive ();
+					var request = Request.Deserialize (msg);
+					var result = Handle (request);
+
+					byte[] output_buffer = result.Serialize ();
+					nmqServer.Send (output_buffer);
 				}
 			}, ct);
+
+			await serverTask;
+		}
+
+		public void Stop ()
+		{
+			cancellationTokenSource.Cancel ();
 		}
 
 		private Result Handle (Request request)
 		{
+			ThrowIfDisposed ();
 			Result result;
-			try
-			{
-				switch (request.Type)
-				{
-					case RequestType.Evaluate:
-						result = Repl.evaluate (request.Code);
-						break;
-					case RequestType.LoadAssembly:
-						result = Repl.loadAssembly (request.AssemblyToLoad);
-						break;
-					case RequestType.Usings:
-						result = Repl.getUsings ();
-						break;
-					case RequestType.Variables:
-						result = Repl.getVariables ();
-						break;
-					default:
-						result = CreateInvalidRequestInfo (request);
-						break;
+			try {
+				switch (request.Type) {
+				case RequestType.Evaluate:
+					result = repl.evaluate (request.Code);
+					break;
+				case RequestType.LoadAssembly:
+					result = repl.loadAssembly (request.AssemblyToLoad);
+					break;
+				case RequestType.Usings:
+					result = repl.getUsings ();
+					break;
+				case RequestType.Variables:
+					result = repl.getVariables ();
+					break;
+				default:
+					result = CreateInvalidRequestInfo (request);
+					break;
 				}
 				return result;
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				Console.WriteLine (e);
 				return new Result (ResultType.FAILED, "Error: Caught exception:\n" + e.Message);
 			}
@@ -122,10 +139,24 @@ namespace MonoDevelop.CSharpRepl
 			return new Result (ResultType.FAILED, sb.ToString ());
 		}
 
-		public static async Task Run (string[] args)
+		public static async Task Run (string endpointAddress, int port)
 		{
-			var server = new CSharpReplServer (Int32.Parse (args [0]));
+			ThrowIfDisposed ();
+			var server = new CSharpReplServer (endpointAddress, port);
 			await server.Start ();
+		}
+
+		private void ThrowIfDisposed ()
+		{
+			if (disposed)
+				throw new ObjectDisposedException (this.GetType ().Name);
+		}
+
+		private bool disposed;
+
+		public void Dispose ()
+		{
+
 		}
 	}
 }
