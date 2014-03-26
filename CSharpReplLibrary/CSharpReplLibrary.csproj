@@ -49,6 +49,7 @@
     <Compile Include="CSharpReplServerProxy.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="Result.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
