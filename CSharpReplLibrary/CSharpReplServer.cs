@@ -23,7 +23,10 @@ namespace MonoDevelop.CSharpRepl
 
 		public Uri Address { get; private set; }
 
-		public CSharpReplServer (string protocol, string host, int port) : this (String.Format ("{0}://{0}:{1}", protocol, host, port))
+		public CSharpReplServer (string protocol, string host, int port) : this (String.Format ("{0}://{0}:{1}",
+		                                                                                        protocol,
+		                                                                                        host,
+		                                                                                        port))
 		{
 		}
 
@@ -45,12 +48,14 @@ namespace MonoDevelop.CSharpRepl
 			if (string.IsNullOrWhiteSpace (builder.Host))
 				throw new ArgumentException ("Must supply a valid hostname or IP", "uri");
 
-			if (string.IsNullOrWhiteSpace (builder.Scheme)) {
+			if (string.IsNullOrWhiteSpace (builder.Scheme))
+			{
 				builder.Scheme = "tcp";
 				// debug message here
 			}
 
-			if (builder.Port == 0) {
+			if (builder.Port == 0)
+			{
 				builder.Port = NetworkUtilities.GetOpenPort ();
 				// debug message here
 			}
@@ -75,11 +80,14 @@ namespace MonoDevelop.CSharpRepl
 			nmqServer = nmqContext.CreateResponseSocket ();
 			nmqServer.Bind (Address.AbsoluteUri.TrimEnd ('/'));
 
-			serverTask = Task.Factory.StartNew (() => {
+			serverTask = Task.Factory.StartNew (() =>
+			{
 				ct.ThrowIfCancellationRequested ();
 
-				while (true) {
-					if (ct.IsCancellationRequested) {
+				while (true)
+				{
+					if (ct.IsCancellationRequested)
+					{
 						// clean up here
 						ct.ThrowIfCancellationRequested ();
 					}
@@ -104,26 +112,30 @@ namespace MonoDevelop.CSharpRepl
 		{
 			ThrowIfDisposed ();
 			Result result;
-			try {
-				switch (request.Type) {
-				case RequestType.Evaluate:
-					result = repl.evaluate (request.Code);
-					break;
-				case RequestType.LoadAssembly:
-					result = repl.loadAssembly (request.AssemblyToLoad);
-					break;
-				case RequestType.Usings:
-					result = repl.getUsings ();
-					break;
-				case RequestType.Variables:
-					result = repl.getVariables ();
-					break;
-				default:
-					result = CreateInvalidRequestInfo (request);
-					break;
+			try
+			{
+				switch (request.Type)
+				{
+					case RequestType.Evaluate:
+						result = repl.evaluate (request.Code);
+						break;
+					case RequestType.LoadAssembly:
+						result = repl.loadAssembly (request.AssemblyToLoad);
+						break;
+					case RequestType.Usings:
+						result = repl.getUsings ();
+						break;
+					case RequestType.Variables:
+						result = repl.getVariables ();
+						break;
+					default:
+						result = CreateInvalidRequestInfo (request);
+						break;
 				}
 				return result;
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				Console.WriteLine (e);
 				return new Result (ResultType.FAILED, "Error: Caught exception:\n" + e.Message);
 			}
@@ -141,7 +153,6 @@ namespace MonoDevelop.CSharpRepl
 
 		public static async Task Run (string endpointAddress, int port)
 		{
-			ThrowIfDisposed ();
 			var server = new CSharpReplServer (endpointAddress, port);
 			await server.Start ();
 		}
@@ -156,7 +167,10 @@ namespace MonoDevelop.CSharpRepl
 
 		public void Dispose ()
 		{
-
+			if (!disposed)
+			{
+				disposed = true;
+			}
 		}
 	}
 }
