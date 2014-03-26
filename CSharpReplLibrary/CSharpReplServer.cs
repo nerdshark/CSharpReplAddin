@@ -23,10 +23,8 @@ namespace MonoDevelop.CSharpRepl
 
 		public Uri Address { get; private set; }
 
-		public CSharpReplServer (string protocol, string host, int port) : this (String.Format ("{0}://{0}:{1}",
-		                                                                                        protocol,
-		                                                                                        host,
-		                                                                                        port))
+		public CSharpReplServer (string protocol, string host, int port)
+			: this (String.Format ("{0}://{0}:{1}", protocol, host, port))
 		{
 		}
 
