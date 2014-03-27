@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using System.Reflection;
+using System.Linq;
 
 namespace MonoDevelop.CSharpRepl
 {
@@ -45,7 +47,7 @@ namespace MonoDevelop.CSharpRepl
 
 		private List<string> namespacesToUse;
 
-		public CSharpRepl ()
+		public CSharpRepl (bool isolated = true)
 		{
 			this.Settings = new CompilerSettings ();
 			this.CompilerErrorWriter = new StringWriter ();
@@ -61,6 +63,21 @@ namespace MonoDevelop.CSharpRepl
 				"System.Collections.Generic",
 				"System.Collections"
 			};
+				
+			if (!isolated) {
+				var referencedAssemblies = AppDomain.CurrentDomain.GetAssemblies ();
+				foreach (var assembly in referencedAssemblies) {
+					this.InnerEvaluator.ReferenceAssembly (assembly);
+					var types = assembly.GetExportedTypes ();
+					foreach (var type in types) {
+						if (namespacesToUse.Contains (type.Namespace))
+							continue;
+						namespacesToUse.Add (type.Namespace);
+					}
+				}
+				namespacesToUse = namespacesToUse.Distinct ().ToList ();
+			}
+
 			this.InitializeUsings ();
 		}
 
