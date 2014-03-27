@@ -33,7 +33,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.CSharp" />
+    <Reference Include="Mono.CSharp">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Net" />
     <Reference Include="NetMQ">
       <HintPath>..\packages\NetMQ.3.3.0.8\lib\net40\NetMQ.dll</HintPath>
