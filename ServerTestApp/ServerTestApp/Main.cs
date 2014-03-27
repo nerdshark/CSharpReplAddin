@@ -17,18 +17,8 @@ namespace ServerTestApp
 
 		public async static Task RunTests (CSharpReplServerProxy proxy)
 		{
-			var output = await proxy.evaluate ("var x = 10;");
+			var output = await proxy.getUsings ();
 			PrintResult (output);
-
-			output = await proxy.evaluate ("x");
-			PrintResult (output);
-
-			output = await proxy.evaluate ("for (int ii = 0; ii < 3; ii++) { Console.WriteLine(ii); }");
-			PrintResult (output);
-
-			output = await proxy.evaluate ("riteLine(ii); }");
-			PrintResult (output);
-
 		}
 
 		public static void Main (string[] args)
@@ -42,13 +32,8 @@ namespace ServerTestApp
 				var proxy = proxies [testIter];
 				proxy.Start ();
 				RunTests (proxy).Wait (); 
-			}
-
-			Console.WriteLine ("Disposing proxies");
-			foreach (var proxy in proxies) {
 				proxy.Dispose ();
 			}
-			Console.WriteLine ("Finished disposing");
 		}
 	}
 }
